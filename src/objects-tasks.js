@@ -389,32 +389,66 @@ function group(array, keySelector, valueSelector) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  selector: '',
+  lastOrder: -1,
+  used: [],
+
+  add(type, value, order) {
+    const unique = [0, 1, 5];
+
+    if (unique.includes(order) && this.used.includes(order)) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more than one time inside the selector'
+      );
+    }
+
+    if (order < this.lastOrder) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+
+    return {
+      ...this,
+      selector: this.selector + value,
+      lastOrder: order,
+      used: [...this.used, order],
+    };
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return this.add('element', value, 0);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return this.add('id', `#${value}`, 1);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return this.add('class', `.${value}`, 2);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return this.add('attr', `[${value}]`, 3);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return this.add('pseudoClass', `:${value}`, 4);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return this.add('pseudoElement', `::${value}`, 5);
+  },
+
+  combine(selector1, combinator, selector2) {
+    return {
+      ...cssSelectorBuilder,
+      selector: `${selector1.stringify()} ${combinator} ${selector2.stringify()}`,
+    };
+  },
+
+  stringify() {
+    return this.selector;
   },
 };
 
